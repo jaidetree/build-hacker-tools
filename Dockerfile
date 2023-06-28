@@ -25,24 +25,24 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     mc tree ack fzf \
     lua5.3 \
     libc6 \
+    direnv \
     #
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 # Runtimes
-COPY library-scripts/*.sh library-scripts/*.env /tmp/library-scripts/ 
+COPY library-scripts/*.sh library-scripts/*.env /tmp/library-scripts/
+RUN curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install linux \
+  --extra-conf "sandbox = false" \
+  --init none \
+  --no-confirm
+ENV PATH="${PATH}:/nix/var/nix/profiles/default/bin"
+RUN nix run nixpkgs#hello
 # External scripts
-RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o /tmp/library-scripts/n
 RUN cd /tmp/library-scripts && \
     /bin/bash swift5-debian.sh && \
     # Rust
     /bin/bash rust-debian.sh && \
     /bin/bash rust-analyzer-debian.sh && \
-    # Node
-    /bin/bash n lts && \
-        npm i -g n yarn \
-            typescript-language-server typescript bash-language-server vls svelte-language-server \
-            awk-language-server@>=0.5.2 && \
-    # TODO Maybe a Next.js or a few frameworks to bootstrap?
     # Ruby
     /bin/bash rbenv-system-wide.sh && \
     /bin/bash -l -c "rbenv install 3.2.1" && /bin/bash -l -c "rbenv global 3.2.1" && \
